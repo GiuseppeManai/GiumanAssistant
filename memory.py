@@ -1,5 +1,6 @@
-import chromadb
 import hashlib
+
+import chromadb
 
 client = chromadb.PersistentClient(path="./db")
 collection = client.get_or_create_collection("notes")
@@ -38,9 +39,7 @@ def index_note(text, source):
 
     for i, chunk in enumerate(chunks):
         collection.add(
-            documents=[chunk],
-            metadatas=[{"source": source, "chunk": i}],
-            ids=[make_id(source, i)]
+            documents=[chunk], metadatas=[{"source": source, "chunk": i}], ids=[make_id(source, i)]
         )
 
 

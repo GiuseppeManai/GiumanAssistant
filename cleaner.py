@@ -1,5 +1,6 @@
 import re
 
+
 def clean_markdown(text: str) -> str:
     text = text.replace("\r\n", "\n")
 

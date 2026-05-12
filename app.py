@@ -1,17 +1,18 @@
 import difflib
 import os
+from datetime import datetime
+
 import requests
 import streamlit as st
-from datetime import datetime
-from pypdf import PdfReader
 from bs4 import BeautifulSoup
-from memory import index_note, query_notes
-from llm import ask_llm, describe_image, summarize_for_wiki
+from pypdf import PdfReader
+
 from cleaner import clean_markdown
-from wiki_manager import integrate_into_wiki, read_wiki
-from wiki_manager import write_wiki, parse_llm_output
+from lint import add_ignore_rule, generate_lint_proposals, parse_proposals
+from llm import ask_llm, summarize_for_wiki
+from memory import index_note, query_notes
 from source_store import save_raw_source
-from lint import generate_lint_proposals, parse_proposals, add_ignore_rule
+from wiki_manager import integrate_into_wiki, parse_llm_output, write_wiki
 
 
 def get_diff(old_text, new_text):
@@ -19,25 +20,18 @@ def get_diff(old_text, new_text):
     new_lines = new_text.splitlines()
 
     diff = difflib.unified_diff(
-        old_lines,
-        new_lines,
-        fromfile="current",
-        tofile="proposed",
-        lineterm=""
+        old_lines, new_lines, fromfile="current", tofile="proposed", lineterm=""
     )
 
     return "\n".join(diff)
+
 
 NOTES_DIR = "notes"
 
 st.set_page_config(page_title="GiuMan Assistant", layout="wide")
 st.title("GiuMan Assistant")
 
-tab1, tab2, tab3 = st.tabs([
-    "Ask Assistant",
-    "Add Knowledge",
-    "Improve Wiki"
-])
+tab1, tab2, tab3 = st.tabs(["Ask Assistant", "Add Knowledge", "Improve Wiki"])
 
 
 def ensure_notes_dir():
@@ -60,7 +54,7 @@ def append_to_note(filename, content, source_label):
         f.write(clean_markdown(content))
         f.write("\n")
 
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         full_text = f.read()
 
     index_note(full_text, filename)
@@ -149,18 +143,11 @@ with tab2:
             "Profile",
             "Action",
         ],
-        index=0
+        index=0,
     )
-    source_name = st.text_input(
-        "Source name (e.g. article title)",
-        key="integrate_source_name"
-    )
+    source_name = st.text_input("Source name (e.g. article title)", key="integrate_source_name")
 
-    source_text = st.text_area(
-        "Paste raw content here",
-        height=200,
-        key="integrate_text_area"
-    )
+    source_text = st.text_area("Paste raw content here", height=200, key="integrate_text_area")
 
     if st.button("Integrate into Wiki"):
         if source_name and source_text:
@@ -173,10 +160,7 @@ with tab2:
     st.divider()
     st.subheader("Integrate webpage / URL into wiki")
 
-    url = st.text_input(
-        "Paste URL",
-        key="wiki_url_input"
-    )
+    url = st.text_input("Paste URL", key="wiki_url_input")
 
     if st.button("Integrate URL into Wiki"):
         if url:
@@ -210,7 +194,6 @@ with tab3:
 
         proposals = parse_proposals(st.session_state["lint_raw"])
 
-
         def is_ignored(proposal_text, ignore_rules):
             text = proposal_text.lower()
 
@@ -219,14 +202,17 @@ with tab3:
                     return True
             return False
 
-
         # Load ignore rules (simple)
         ignore_rules = []
         ignore_path = "wiki/lint_ignore.md"
 
         if os.path.exists(ignore_path):
-            with open(ignore_path, "r", encoding="utf-8") as f:
-                ignore_rules = [line.strip("- ").strip() for line in f.readlines() if line.strip().startswith("-")]
+            with open(ignore_path, encoding="utf-8") as f:
+                ignore_rules = [
+                    line.strip("- ").strip()
+                    for line in f.readlines()
+                    if line.strip().startswith("-")
+                ]
 
         # Filter proposals
         filtered_proposals = []
@@ -241,7 +227,7 @@ with tab3:
         for i, p in enumerate(proposals):
             st.markdown(f"### Proposal {i + 1}")
 
-# Extract a short description
+            # Extract a short description
             lines = p["raw"].splitlines()
             desc = ""
 
@@ -260,7 +246,7 @@ with tab3:
                 path = os.path.join("wiki", clean_name)
 
                 if os.path.exists(path):
-                    with open(path, "r", encoding="utf-8") as f:
+                    with open(path, encoding="utf-8") as f:
                         old_content = f.read()
                 else:
                     old_content = ""

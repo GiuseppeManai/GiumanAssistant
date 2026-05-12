@@ -1,6 +1,8 @@
 import os
-from wiki_manager import read_wiki
+
 from llm import ask_llm
+from wiki_manager import read_wiki
+
 
 def add_ignore_rule(text):
     path = "wiki/lint_ignore.md"
@@ -8,12 +10,13 @@ def add_ignore_rule(text):
     with open(path, "a", encoding="utf-8") as f:
         f.write(f"\n- {text}\n")
 
+
 def generate_lint_proposals():
     pages = read_wiki()
     ignore_path = "wiki/lint_ignore.md"
     ignore_rules = ""
     if os.path.exists(ignore_path):
-        with open(ignore_path, "r", encoding="utf-8") as f:
+        with open(ignore_path, encoding="utf-8") as f:
             ignore_rules = f.read()
 
     combined = "\n\n".join([f"# {k}\n{v}" for k, v in pages.items()])
@@ -74,6 +77,7 @@ def generate_lint_proposals():
     response = ask_llm(prompt, [], [])
     return response
 
+
 def parse_proposals(output):
     proposals = []
     current = None
@@ -85,10 +89,7 @@ def parse_proposals(output):
                 current["raw"] = "\n".join(buffer).strip()
                 proposals.append(current)
 
-            current = {
-                "raw": "",
-                "files": {}
-            }
+            current = {"raw": "", "files": {}}
             buffer = []
         else:
             buffer.append(line)

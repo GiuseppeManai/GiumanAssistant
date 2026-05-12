@@ -1,9 +1,9 @@
 import os
-from llm import ask_llm
 from datetime import datetime
 
-WIKI_DIR = "wiki"
+from llm import ask_llm
 
+WIKI_DIR = "wiki"
 
 
 def read_wiki():
@@ -11,7 +11,7 @@ def read_wiki():
     for filename in os.listdir(WIKI_DIR):
         if filename.endswith(".md"):
             path = os.path.join(WIKI_DIR, filename)
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 pages[filename] = f.read()
     return pages
 
@@ -51,9 +51,7 @@ def integrate_into_wiki(source_text, source_name, knowledge_type):
     current_date = datetime.now().strftime("%Y-%m-%d")
     wiki_pages = read_wiki()
 
-    combined_wiki = "\n\n".join(
-        [f"# FILE: {k}\n{v}" for k, v in wiki_pages.items()]
-    )
+    combined_wiki = "\n\n".join([f"# FILE: {k}\n{v}" for k, v in wiki_pages.items()])
 
     prompt = f"""
 You maintain a high-quality personal knowledge wiki in markdown.

@@ -1,5 +1,6 @@
 from llm import ask_llm
 
+
 def apply_voice(text):
     prompt = f"""
     Rewrite in Giuseppe's style.
