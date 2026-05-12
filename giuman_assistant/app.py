@@ -15,6 +15,7 @@ from giuman_assistant.lint import (
 )
 from giuman_assistant.llm import ask_llm, summarize_for_wiki
 from giuman_assistant.memory import index_note, query_notes
+from giuman_assistant.security import validate_url
 from giuman_assistant.source_store import save_raw_source
 from giuman_assistant.wiki_manager import (
     integrate_into_wiki,
@@ -76,8 +77,19 @@ def main():
         return text.strip()
 
     def extract_url_text(url):
-        headers = {"User-Agent": "Mozilla/5.0"}
-        response = requests.get(url, headers=headers, timeout=15)
+        response = requests.get(
+            url,
+
+            timeout=10,
+            allow_redirects=True,
+            stream=True,
+        )
+        max_size = 5 * 1024 * 1024
+
+        content_length = response.headers.get("Content-Length")
+
+        if content_length and int(content_length) > max_size:
+            raise ValueError("Response too large")
         response.raise_for_status()
 
         soup = BeautifulSoup(response.text, "html.parser")
@@ -167,6 +179,7 @@ def main():
         if st.button("Integrate URL into Wiki"):
             if url:
                 try:
+                    validate_url(url)
                     page_title, page_text = extract_url_text(url)
 
                     # optional limit
