@@ -1,7 +1,7 @@
 import os
 
-from llm import ask_llm
-from wiki_manager import read_wiki
+from giuman_assistant.llm import ask_llm
+from giuman_assistant.wiki_manager import read_wiki
 
 
 def add_ignore_rule(text):

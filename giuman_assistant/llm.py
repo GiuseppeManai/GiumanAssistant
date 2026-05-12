@@ -19,7 +19,7 @@ def load_agent_instructions():
 def ask_llm(question, docs, sources):
     agent_instructions = load_agent_instructions()
 
-        # Pull personal profile explicitly
+    # Pull personal profile explicitly
     personal_context = ""
     for i in range(len(docs)):
         if sources and i < len(sources) and sources[i] and "source" in sources[i]:

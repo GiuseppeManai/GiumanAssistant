@@ -1,6 +1,6 @@
 import os
 
-from memory import index_note
+from giuman_assistant.memory import index_note
 
 WIKI_DIR = "wiki"
 

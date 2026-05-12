@@ -1,7 +1,7 @@
 import os
 from datetime import datetime
 
-from llm import ask_llm
+from giuman_assistant.llm import ask_llm
 
 WIKI_DIR = "wiki"
 
