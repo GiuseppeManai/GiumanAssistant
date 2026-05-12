@@ -3,6 +3,7 @@
 ## Philosophy
 
 GiuMan Assistant is designed as a small, local-first reasoning system.
+It is entirely written with the help of coding agents. 
 
 The system prioritizes:
 - curated knowledge over raw retrieval
