@@ -22,6 +22,7 @@ from giuman_assistant.wiki_manager import (
     write_wiki,
 )
 
+
 def main():
 
     def get_diff(old_text, new_text):
@@ -34,7 +35,6 @@ def main():
 
         return "\n".join(diff)
 
-
     NOTES_DIR = "notes"
 
     st.set_page_config(page_title="GiuMan Assistant", layout="wide")
@@ -42,15 +42,12 @@ def main():
 
     tab1, tab2, tab3 = st.tabs(["Ask Assistant", "Add Knowledge", "Improve Wiki"])
 
-
     def ensure_notes_dir():
         os.makedirs(NOTES_DIR, exist_ok=True)
-
 
     def list_note_files():
         ensure_notes_dir()
         return [f for f in os.listdir(NOTES_DIR) if f.endswith(".md") or f.endswith(".txt")]
-
 
     def append_to_note(filename, content, source_label):
         ensure_notes_dir()
@@ -68,7 +65,6 @@ def main():
 
         index_note(full_text, filename)
 
-
     def extract_pdf_text(uploaded_file):
         reader = PdfReader(uploaded_file)
         text = ""
@@ -78,7 +74,6 @@ def main():
             text += f"\n\n--- Page {page_num} ---\n{page_text}"
 
         return text.strip()
-
 
     def extract_url_text(url):
         headers = {"User-Agent": "Mozilla/5.0"}
@@ -95,7 +90,6 @@ def main():
         lines = [line.strip() for line in text.splitlines() if line.strip()]
 
         return title, "\n".join(lines)[:20000]
-
 
     with tab1:
         question = st.text_input("Ask something")
@@ -117,7 +111,7 @@ def main():
 
                 docs = filtered_docs
                 sources = filtered_sources
-            from voice import apply_voice
+            from giuman_assistant.voice import apply_voice
 
             raw_answer = ask_llm(question, docs, sources)
             answer = apply_voice(raw_answer)
@@ -134,7 +128,6 @@ def main():
                 chunk = s.get("chunk", "unknown")
 
                 st.write(f"- {source} / chunk {chunk}")
-
 
     with tab2:
         st.subheader("Integrate source into wiki")
@@ -192,7 +185,6 @@ def main():
                     st.error(f"Could not integrate URL: {e}")
             else:
                 st.warning("Paste a URL first.")
-
 
     with tab3:
         st.subheader("Improve Wiki (Lint)")
