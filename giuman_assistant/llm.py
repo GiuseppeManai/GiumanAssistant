@@ -1,11 +1,19 @@
 import base64
 import os
+import time
 
 from dotenv import load_dotenv
 from openai import OpenAI
 
 load_dotenv()
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+MAX_PROMPT_CHARS = 60_000
+MAX_IMAGE_BYTES = 5_000_000
+RETRIES = 2
+TIMEOUT = 30
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), timeout=TIMEOUT)
 
 
 def load_agent_instructions():
@@ -16,23 +24,70 @@ def load_agent_instructions():
         return ""
 
 
+def trim_text(text, limit):
+    if not text:
+        return ""
+
+    if len(text) <= limit:
+        return text
+
+    return text[:limit] + "\n\n[TRUNCATED]"
+
+
+def call_openai(messages):
+    last_error = None
+
+    for attempt in range(RETRIES + 1):
+        try:
+            res = client.chat.completions.create(
+                model=MODEL,
+                messages=messages,
+            )
+            return res.choices[0].message.content or ""
+        except Exception as e:
+            last_error = e
+            if attempt < RETRIES:
+                time.sleep(1 + attempt)
+
+    return f"OpenAI request failed: {last_error}"
+
+
+def build_context(docs, sources):
+    parts = []
+
+    for i, doc in enumerate(docs):
+        if not sources or i >= len(sources):
+            continue
+
+        source = sources[i] or {}
+        filename = source.get("source")
+
+        if filename:
+            parts.append(f"Source: {filename}\n{doc}")
+
+    return "\n\n".join(parts)
+
+
+def build_personal_context(docs, sources):
+    parts = []
+
+    for i, doc in enumerate(docs):
+        if not sources or i >= len(sources):
+            continue
+
+        source = sources[i] or {}
+        filename = source.get("source", "")
+
+        if "personal_profile.md" in filename:
+            parts.append(doc)
+
+    return "\n\n".join(parts)
+
+
 def ask_llm(question, docs, sources):
     agent_instructions = load_agent_instructions()
-
-    # Pull personal profile explicitly
-    personal_context = ""
-    for i in range(len(docs)):
-        if sources and i < len(sources) and sources[i] and "source" in sources[i]:
-            if "personal_profile.md" in sources[i]["source"]:
-                personal_context += docs[i] + "\n\n"
-
-    # Build context
-    context_parts = []
-    for i in range(len(docs)):
-        if sources and i < len(sources) and sources[i] and "source" in sources[i]:
-            context_parts.append(f"Source: {sources[i]['source']}\n{docs[i]}")
-
-    context = "\n\n".join(context_parts)
+    personal_context = build_personal_context(docs, sources)
+    context = build_context(docs, sources)
 
     prompt = f"""
 {agent_instructions}
@@ -64,25 +119,18 @@ Question:
 {question}
 """
 
-    res = client.chat.completions.create(
-        model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}]
-    )
+    prompt = trim_text(prompt, MAX_PROMPT_CHARS)
 
-    return res.choices[0].message.content
+    return call_openai([{"role": "user", "content": prompt}])
 
 
 def describe_image(image_bytes, filename):
+    if len(image_bytes) > MAX_IMAGE_BYTES:
+        return "Image is too large to process."
+
     encoded = base64.b64encode(image_bytes).decode("utf-8")
 
-    res = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": f"""
+    text = f"""
 Describe this image for a personal knowledge base.
 
 Include:
@@ -92,15 +140,22 @@ Include:
 - why useful later
 
 Filename: {filename}
-""",
+"""
+
+    return call_openai(
+        [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": text},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/png;base64,{encoded}"},
                     },
-                    {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{encoded}"}},
                 ],
             }
-        ],
+        ]
     )
-
-    return res.choices[0].message.content
 
 
 def summarize_for_wiki(text):
@@ -131,11 +186,9 @@ OUTPUT FORMAT:
 - ...
 
 CONTENT:
-{text}
+{trim_text(text, MAX_PROMPT_CHARS)}
 """
 
-    res = client.chat.completions.create(
-        model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}]
-    )
+    prompt = trim_text(prompt, MAX_PROMPT_CHARS)
 
-    return res.choices[0].message.content
+    return call_openai([{"role": "user", "content": prompt}])
