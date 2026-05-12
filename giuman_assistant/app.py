@@ -83,24 +83,46 @@ def main():
             allow_redirects=True,
             stream=True,
         )
-        max_size = 5 * 1024 * 1024
 
+        max_size = 5 * 1024 * 1024
         content_length = response.headers.get("Content-Length")
 
         if content_length and int(content_length) > max_size:
             raise ValueError("Response too large")
+
         response.raise_for_status()
 
-        soup = BeautifulSoup(response.text, "html.parser")
+        content_type = response.headers.get("Content-Type", "").lower()
+
+        if "text/html" not in content_type:
+            raise ValueError(f"Unsupported content type: {content_type}")
+
+        chunks = []
+        total = 0
+
+        for chunk in response.iter_content(chunk_size=8192, decode_unicode=True):
+            if not chunk:
+                continue
+
+            total += len(chunk.encode("utf-8"))
+
+            if total > max_size:
+                raise ValueError("Response too large")
+
+            chunks.append(chunk)
+
+        html = "".join(chunks)
+
+        soup = BeautifulSoup(html, "html.parser")
 
         for tag in soup(["script", "style", "nav", "footer", "header"]):
             tag.decompose()
 
-        title = soup.title.string.strip() if soup.title else url
+        title = soup.title.string.strip() if soup.title and soup.title.string else url
         text = soup.get_text(separator="\n")
         lines = [line.strip() for line in text.splitlines() if line.strip()]
 
-        return title, "\n".join(lines)[:20000]
+        return title, "\n".join(lines)[:20_000]
 
     with tab1:
         question = st.text_input("Ask something")
@@ -189,7 +211,7 @@ def main():
                     clean_summary = summarize_for_wiki(page_text)
                     clean_summary = apply_voice(clean_summary)
 
-                    updated_files = integrate_into_wiki(clean_summary, page_title)
+                    updated_files = integrate_into_wiki(clean_summary, page_title, "Source only")
                     st.caption(f"Raw source saved: {raw_path}")
 
                     st.success(f"Integrated URL into wiki. Updated: {updated_files}")
