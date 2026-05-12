@@ -53,18 +53,19 @@ Create `.env`:
 OPENAI_API_KEY=your_key_here
 ```
 
+
 ## Run
 
 ```bash
-python reindex_wiki.py
-streamlit run app.py
+python -m scripts.reindex_wiki
+streamlit run run.py
 ```
 
 ## Reset Memory Index
 
 ```powershell
 Remove-Item -Recurse -Force db
-python reindex_wiki.py
+python -m scripts.reindex_wiki
 ```
 
 ## Design Principles
@@ -74,3 +75,22 @@ python reindex_wiki.py
 - LLM reasons over provided context
 - Keep code small, explicit, and hackable
 - Prefer practical clarity over framework complexity
+
+## Core Invariants
+
+- Wiki is the source of truth
+- Retrieval controls context
+- LLMs do not decide retrieval scope
+- All memory remains inspectable
+- Prompts remain plain text
+- No hidden orchestration layers
+- Metadata filters retrieval
+
+## Security Model
+
+- Local-first architecture
+- URL validation and SSRF protection
+- Path traversal protection
+- Input size limits
+- Explicit retrieval filtering
+- Secrets stored only in `.env`
