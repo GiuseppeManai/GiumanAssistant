@@ -79,7 +79,6 @@ def main():
     def extract_url_text(url):
         response = requests.get(
             url,
-
             timeout=10,
             allow_redirects=True,
             stream=True,

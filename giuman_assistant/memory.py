@@ -44,6 +44,9 @@ def index_note(text, source):
 
 
 def query_notes(query, n=5):
+    if not query or not query.strip():
+        return [], []
+
     results = collection.query(query_texts=[query], n_results=n)
     docs = results.get("documents", [[]])[0]
     sources = results.get("metadatas", [[]])[0]

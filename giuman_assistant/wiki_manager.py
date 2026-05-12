@@ -1,30 +1,40 @@
-import os
 from datetime import datetime
+from pathlib import Path
 
 from giuman_assistant.llm import ask_llm
 
-WIKI_DIR = "wiki"
+WIKI_DIR = Path("wiki")
+
+
+def safe_wiki_path(wiki_dir, filename):
+    root = Path(wiki_dir).resolve()
+    path = (root / filename).resolve()
+
+    if path == root or root not in path.parents:
+        raise ValueError(f"Unsafe wiki path: {filename}")
+
+    return path
+
+
+def normalize_wiki_filename(filename):
+    filename = filename.replace("wiki/", "").replace("wiki\\", "")
+    return filename.strip()
 
 
 def read_wiki():
     pages = {}
-    for filename in os.listdir(WIKI_DIR):
-        if filename.endswith(".md"):
-            path = os.path.join(WIKI_DIR, filename)
-            with open(path, encoding="utf-8") as f:
-                pages[filename] = f.read()
+
+    for path in WIKI_DIR.glob("*.md"):
+        pages[path.name] = path.read_text(encoding="utf-8")
+
     return pages
 
 
 def write_wiki(updates):
     for filename, content in updates.items():
-        # FIX: remove leading "wiki/" if present
-        filename = filename.replace("wiki/", "").replace("wiki\\", "")
-
-        path = os.path.join(WIKI_DIR, filename)
-
-        with open(path, "w", encoding="utf-8") as f:
-            f.write(content)
+        filename = normalize_wiki_filename(filename)
+        path = safe_wiki_path(WIKI_DIR, filename)
+        path.write_text(content, encoding="utf-8")
 
 
 def parse_llm_output(output):
