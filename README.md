@@ -1,6 +1,10 @@
 # GiuMan Assistant
 
 A local-first personal AI assistant for structured knowledge, strategic thinking, and idea development.
+100% vibe coded.  
+Inspired by 
+https://gist.github.com/VivianBalakrishnan/a7d4eec3833baee4971a0ee54b08f322
+https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f
 
 The system combines:
 - Streamlit UI
