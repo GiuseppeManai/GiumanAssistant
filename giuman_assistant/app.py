@@ -3,10 +3,10 @@ import os
 from datetime import datetime
 
 import requests
-import streamlit as st
 from bs4 import BeautifulSoup
 from pypdf import PdfReader
 
+import streamlit as st
 from giuman_assistant.cleaner import clean_markdown
 from giuman_assistant.lint import (
     add_ignore_rule,
@@ -39,9 +39,93 @@ def main():
     NOTES_DIR = "notes"
 
     st.set_page_config(page_title="GiuMan Assistant", layout="wide")
-    st.title("GiuMan Assistant")
+    st.markdown(
+        """
+        <style>
 
-    tab1, tab2, tab3 = st.tabs(["Ask Assistant", "Add Knowledge", "Improve Wiki"])
+        .stApp {
+            background-color: #003366;
+            color: #F4F7FA;
+        }
+
+        section[data-testid="stSidebar"] {
+            background-color: #102A43;
+        }
+
+        h1, h2, h3, h4, h5, h6,
+        label,
+        [data-testid="stMarkdownContainer"] p {
+            color: #F4F7FA;
+        }
+
+        [data-testid="stMarkdownContainer"] {
+            color: #F4F7FA;
+        }
+
+        .stTextInput input,
+        .stTextArea textarea {
+            background-color: #0F253D;
+            color: #F4F7FA;
+            border: 1px solid #B7FF2A;
+            border-radius: 8px;
+        }
+
+        .stTextInput label,
+        .stTextArea label,
+        .stSelectbox label {
+            color: #F4F7FA;
+        }
+
+        .stButton button {
+            background-color: #B7FF2A !important;
+            color: #001F3F !important;
+            border-radius: 8px;
+            border: none;
+            font-weight: 700;
+        }
+
+        .stButton button *,
+        button[kind="secondary"] *,
+        button[kind="primary"] * {
+            color: #001F3F !important;
+        }
+
+        .stButton button:hover {
+            background-color: #D4FF70 !important;
+            color: #001F3F !important;
+        }
+
+        .stButton button:hover * {
+            color: #001F3F !important;
+        }
+
+        div[role="radiogroup"] label {
+            color: #F4F7FA;
+        }
+
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.sidebar.title("GiuMan Assistant")
+    st.sidebar.caption("Local-first AI memory system")
+    st.markdown(
+        """
+        # GiuMan Assistant
+
+        Local-first AI memory and strategic reasoning system.
+        """
+    )
+
+    page = st.sidebar.radio(
+        "Navigation",
+        [
+            "Ask Assistant",
+            "Add Knowledge",
+            "Improve Wiki",
+        ],
+    )
 
     def ensure_notes_dir():
         os.makedirs(NOTES_DIR, exist_ok=True)
@@ -124,7 +208,7 @@ def main():
 
         return title, "\n".join(lines)[:20_000]
 
-    with tab1:
+    if page == "Ask Assistant":
         question = st.text_input("Ask something")
 
         if question:
@@ -162,7 +246,7 @@ def main():
 
                 st.write(f"- {source} / chunk {chunk}")
 
-    with tab2:
+    if page == "Add Knowledge":
         st.subheader("Integrate source into wiki")
         knowledge_type = st.selectbox(
             "Knowledge type",
@@ -220,7 +304,7 @@ def main():
             else:
                 st.warning("Paste a URL first.")
 
-    with tab3:
+    if page == "Improve Wiki":
         st.subheader("Improve Wiki (Lint)")
 
         if st.button("Run Lint"):
