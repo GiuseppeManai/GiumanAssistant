@@ -1,10 +1,17 @@
 # GiuMan Assistant
 
 A local-first personal AI assistant for structured knowledge, strategic thinking, and idea development.
-100% vibe coded.  
-Inspired by 
-https://gist.github.com/VivianBalakrishnan/a7d4eec3833baee4971a0ee54b08f322
-https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f
+Built experimentally with coding agents and iterative refinement.
+The system prioritizes explicit retrieval, inspectable memory, and minimal orchestration over autonomous agent complexity.
+
+Inspired by:
+- Vivian Balakrishnan's assistant gist
+- Andrej Karpathy's note-taking / memory system concepts
+
+
+References:
+- https://gist.github.com/VivianBalakrishnan/a7d4eec3833baee4971a0ee54b08f322
+- https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f
 
 The system combines:
 - Streamlit UI
@@ -16,6 +23,13 @@ The system combines:
 ## Purpose
 
 GiuMan Assistant is designed to act as a personal thinking partner. It helps capture knowledge, retrieve context, structure ideas, and support strategic reasoning.
+
+## Non-Goals
+
+- Autonomous multi-agent orchestration
+- Hidden memory systems
+- Framework-heavy abstractions
+- Cloud-dependent architecture
 
 ## Architecture
 
@@ -46,6 +60,7 @@ AGENTS.md     assistant behavior instructions
 ## Install
 
 ```bash
+Copy `.env.example` to `.env`
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
