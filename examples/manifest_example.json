@@ -1,0 +1,12 @@
+[
+  {
+    "source_file": "test_note.pdf",
+    "sha256": "xxx",
+    "size": 123456,
+    "modified": 123456789.0,
+    "imported_at": "2026-06-01T15:49:43",
+    "raw_txt_path": "raw\\20260601_154921_test_note_pdf.txt",
+    "suggested_category": "family",
+    "duplicate_status": "new"
+  }
+]

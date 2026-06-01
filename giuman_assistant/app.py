@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 from pypdf import PdfReader
 
 import streamlit as st
+from giuman_assistant.ainote_importer import import_new_notes, validate_inbox
 from giuman_assistant.cleaner import clean_markdown
 from giuman_assistant.lint import (
     add_ignore_rule,
@@ -123,6 +124,7 @@ def main():
         [
             "Ask Assistant",
             "Add Knowledge",
+            "Import Notes",
             "Improve Wiki",
         ],
     )
@@ -303,6 +305,62 @@ def main():
                     st.error(f"Could not integrate URL: {e}")
             else:
                 st.warning("Paste a URL first.")
+
+    if page == "Import Notes":
+        st.subheader("Import AINOTE2 Notes")
+        st.write("Place exported AINOTE2 PDF or image files in `AINOTE2_inbox/raw/`.")
+
+        category = st.selectbox(
+            "Category",
+            [
+                "personal",
+                "family",
+                "professional",
+                "confidential",
+                "health",
+                "finance",
+                "learning",
+                "ideas",
+            ],
+            index=2,
+        )
+        knowledge_type = st.selectbox(
+            "Knowledge type",
+            [
+                "Source only",
+                "Idea",
+                "Concept",
+                "Framework",
+                "Project",
+                "Client",
+                "Decision",
+                "Pattern",
+                "Profile",
+                "Action",
+            ],
+            index=0,
+            key="ainote_knowledge_type",
+        )
+
+        if st.button("Validate inbox"):
+            result = validate_inbox()
+            st.write(result["message"])
+            st.write("New")
+            st.write(result["new"])
+            st.write("Already imported")
+            st.write(result["already_imported"])
+            st.write("Unsupported")
+            st.write(result["unsupported"])
+
+        if st.button("Import new notes"):
+            result = import_new_notes(category, knowledge_type)
+            st.write(result["message"])
+            st.write("Processed")
+            st.write(result["processed"])
+            st.write("Skipped")
+            st.write(result["skipped"])
+            st.write("Failed")
+            st.write(result["failed"])
 
     if page == "Improve Wiki":
         st.subheader("Improve Wiki (Lint)")
