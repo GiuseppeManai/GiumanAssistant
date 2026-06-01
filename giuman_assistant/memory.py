@@ -5,6 +5,7 @@ import chromadb
 
 client = chromadb.PersistentClient(path="./db")
 collection = client.get_or_create_collection("notes")
+MAX_RETRIEVAL_DISTANCE = 1.30
 EXCLUDED_RETRIEVAL_SOURCES = {"log.md", "index.md", "lint_ignore.md", "wiki/log.md", "wiki/index.md"}
 
 

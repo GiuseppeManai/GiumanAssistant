@@ -19,7 +19,7 @@ from giuman_assistant.lint import (
     parse_proposals,
 )
 from giuman_assistant.llm import ask_llm, summarize_for_wiki
-from giuman_assistant.memory import index_note, query_notes
+from giuman_assistant.memory import MAX_RETRIEVAL_DISTANCE, index_note, query_notes
 from giuman_assistant.security import validate_url
 from giuman_assistant.source_store import save_raw_source
 from giuman_assistant.wiki_manager import (
@@ -219,9 +219,7 @@ def main():
 
         if question:
             migrate_legacy_imports()
-            docs, sources = query_notes(question, max_distance=1.2)
-            if not docs:
-                docs, sources = query_notes(question)
+            docs, sources = query_notes(question, max_distance=MAX_RETRIEVAL_DISTANCE)
 
             if "idea" in question.lower():
                 filtered_docs = []
@@ -237,38 +235,46 @@ def main():
                 docs = filtered_docs
                 sources = filtered_sources
 
-            from giuman_assistant.voice import apply_voice
-
-            raw_answer = ask_llm(question, docs, sources)
-            answer = apply_voice(raw_answer)
-
             st.subheader("Answer")
-            st.write(answer)
+            if docs:
+                from giuman_assistant.voice import apply_voice
+
+                raw_answer = ask_llm(question, docs, sources)
+                answer = apply_voice(raw_answer)
+                st.write(answer)
+            else:
+                st.write(
+                    "No strong retrieved context found in the local wiki. "
+                    "Try a more specific question or import/add relevant notes first."
+                )
 
             st.subheader("Retrieved context")
-            for source in sources:
-                if not source:
-                    continue
+            if not sources:
+                st.write("No strong retrieved context found.")
+            else:
+                for source in sources:
+                    if not source:
+                        continue
 
-                source_name = source.get("source_path") or source.get("source") or "unknown"
-                original_filename = source.get("original_filename")
-                detected_title = source.get("detected_title")
-                wiki_page = source.get("wiki_page_filename")
-                chunk = source.get("chunk", "unknown")
-                distance = source.get("distance")
+                    source_name = source.get("source_path") or source.get("source") or "unknown"
+                    original_filename = source.get("original_filename")
+                    detected_title = source.get("detected_title")
+                    wiki_page = source.get("wiki_page_filename")
+                    chunk = source.get("chunk", "unknown")
+                    distance = source.get("distance")
 
-                parts = [source_name]
-                if wiki_page and wiki_page not in source_name:
-                    parts.append(f"page: {wiki_page}")
-                if original_filename:
-                    parts.append(f"original: {original_filename}")
-                if detected_title:
-                    parts.append(f"title: {detected_title}")
-                parts.append(f"chunk {chunk}")
-                if distance is not None:
-                    parts.append(f"distance {distance:.3f}")
+                    parts = [source_name]
+                    if wiki_page and wiki_page not in source_name:
+                        parts.append(f"page: {wiki_page}")
+                    if original_filename:
+                        parts.append(f"original: {original_filename}")
+                    if detected_title:
+                        parts.append(f"title: {detected_title}")
+                    parts.append(f"chunk {chunk}")
+                    if distance is not None:
+                        parts.append(f"distance {distance:.3f}")
 
-                st.write(" - ".join(parts))
+                    st.write(" - ".join(parts))
 
     if page == "Add Knowledge":
         st.subheader("Integrate source into wiki")
