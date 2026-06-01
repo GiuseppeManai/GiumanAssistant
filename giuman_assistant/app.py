@@ -38,7 +38,7 @@ def main():
 
     NOTES_DIR = "notes"
 
-    st.set_page_config(page_title="GiuMan Assistant", layout="wide")
+    st.set_page_config(page_title="My Assistant", layout="wide")
     st.markdown(
         """
         <style>
