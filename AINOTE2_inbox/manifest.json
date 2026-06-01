@@ -1,0 +1,92 @@
+[
+  {
+    "source_file": "2026_05_28 21_53_40.pdf",
+    "sha256": "d42f64aa8b0d174947701372bdcc341a6ae13adccd9cc2632a43c14e584bdf7e",
+    "size": 77868,
+    "modified": 1780294102.0,
+    "imported_at": "2026-06-01T15:43:35",
+    "raw_txt_path": "raw\\20260601_154321_2026_05_28_21_53_40.ainote_pdf.txt",
+    "suggested_category": "family",
+    "duplicate_status": "new"
+  },
+  {
+    "source_file": "CODICI.pdf",
+    "sha256": "6afd7b27a2a6e75ed8d0d6eab914c78e3571dc866da298b33bc010318da44b79",
+    "size": 48983,
+    "modified": 1780294103.0,
+    "imported_at": "2026-06-01T15:44:07",
+    "raw_txt_path": "raw\\20260601_154353_codici.ainote_pdf.txt",
+    "suggested_category": "family",
+    "duplicate_status": "new"
+  },
+  {
+    "source_file": "DS4(1).pdf",
+    "sha256": "2a9fcbdf4a2ec5cbd1a3d044c1e39fc8571fb1fbf246cdff4e741cda64879261",
+    "size": 84101,
+    "modified": 1780297982.0,
+    "imported_at": "2026-06-01T15:44:47",
+    "raw_txt_path": "raw\\20260601_154418_ds4_1.ainote_pdf.txt",
+    "suggested_category": "family",
+    "duplicate_status": "new"
+  },
+  {
+    "source_file": "DS4.pdf",
+    "sha256": "604f127727b2f48692b71c15ebedfc3c02e05aaaaf7df53c3191e61991654ff6",
+    "size": 64858,
+    "modified": 1780294105.0,
+    "imported_at": "2026-06-01T15:45:18",
+    "raw_txt_path": "raw\\20260601_154454_ds4.ainote_pdf.txt",
+    "suggested_category": "family",
+    "duplicate_status": "new"
+  },
+  {
+    "source_file": "Isabella English(1).pdf",
+    "sha256": "7d09eb736ae3513d9fc95ab216dfe1406263ac757d9410e714080373f6e8dc5f",
+    "size": 115593,
+    "modified": 1780294109.0,
+    "imported_at": "2026-06-01T15:46:14",
+    "raw_txt_path": "raw\\20260601_154556_isabella_english_1.ainote_pdf.txt",
+    "suggested_category": "family",
+    "duplicate_status": "new"
+  },
+  {
+    "source_file": "Isabella English(2).pdf",
+    "sha256": "445e1fb2aa0d68adb897166b2e0bb4351778bc510771d6091a8b575328d9195a",
+    "size": 115593,
+    "modified": 1780294110.0,
+    "imported_at": "2026-06-01T15:47:27",
+    "raw_txt_path": "raw\\20260601_154625_isabella_english_2.ainote_pdf.txt",
+    "suggested_category": "family",
+    "duplicate_status": "new"
+  },
+  {
+    "source_file": "Isabella English.pdf",
+    "sha256": "14021250e24035876e7e8b240a29c58084e8a40c187d2235fb3e2eeae8a50ec1",
+    "size": 115593,
+    "modified": 1780294107.0,
+    "imported_at": "2026-06-01T15:48:13",
+    "raw_txt_path": "raw\\20260601_154753_isabella_english.ainote_pdf.txt",
+    "suggested_category": "family",
+    "duplicate_status": "new"
+  },
+  {
+    "source_file": "OLIVIA PTM(1).pdf",
+    "sha256": "45bd20bef6dff7bd95c661e80b59cc63b82c8f3b1eb484b56bd7db1c036d031a",
+    "size": 222840,
+    "modified": 1780294113.0,
+    "imported_at": "2026-06-01T15:49:04",
+    "raw_txt_path": "raw\\20260601_154835_olivia_ptm_1.ainote_pdf.txt",
+    "suggested_category": "family",
+    "duplicate_status": "new"
+  },
+  {
+    "source_file": "OLIVIA PTM.pdf",
+    "sha256": "d6598a4c1800857a49ff72928f021650f7b3dbfdf3e50d881aae66061df11529",
+    "size": 222840,
+    "modified": 1780294111.0,
+    "imported_at": "2026-06-01T15:49:43",
+    "raw_txt_path": "raw\\20260601_154921_olivia_ptm.ainote_pdf.txt",
+    "suggested_category": "family",
+    "duplicate_status": "new"
+  }
+]

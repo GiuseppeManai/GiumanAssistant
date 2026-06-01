@@ -1,0 +1,6 @@
+Source: test4
+Type: manual
+Saved: 20260501_111059
+
+Physical AI connects AI models with robots and real-world execution.
+This is particularly relevant now that there is a lot of hype on humanoids

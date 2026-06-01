@@ -158,6 +158,98 @@ Filename: {filename}
     )
 
 
+def extract_note_from_image(image_bytes, filename):
+    encoded = base64.b64encode(image_bytes).decode("utf-8")
+
+    text = f"""
+    You are extracting knowledge from a handwritten note captured from iFLYTEK AINOTE.
+
+    TASK:
+    Convert the note image into a structured raw text artifact for a personal and professional second brain.
+
+    CRITICAL RULES:
+    - Do NOT describe the image.
+    - Do NOT say "visible elements" or "description of image".
+    - Do NOT summarize before transcribing.
+    - Preserve the original handwriting content as much as possible.
+    - Preserve headings, bullets, names, subjects, arrows, and grouping.
+    - If a word is unclear, write [?] next to it.
+    - Do not invent missing content.
+
+    CATEGORY RULES:
+    - family = spouse, children, school, home, parenting, relatives
+    - professional = work, clients, strategy, meetings, delivery, leadership
+    - learning = user's own study notes, courses, books, concepts
+    - ideas = raw ideas, startup ideas, product ideas, experiments
+    - finance = money, investment, budgeting, expenses
+    - health = health, food, training, medical, sleep
+    - personal = personal reflections, habits, values, identity
+    - admin = logistics, errands, accounts, subscriptions, planning
+
+    FILE:
+    {filename}
+
+    OUTPUT FORMAT:
+
+    METADATA
+    - detected_title:
+    - category: family | professional | learning | ideas | finance | health | personal | admin
+    - category_confidence: low | medium | high
+    - knowledge_type: meeting | idea | decision | project | profile | framework | concept | action | reference | other
+    - likely_note_type:
+    - date_if_visible:
+    - possible_update_of:
+    - source_device: iflytek_ainote
+    - source_file: {filename}
+    - uncertainty_level: low | medium | high
+
+    ENTITIES
+    - people:
+    - organizations:
+    - places:
+    - clients:
+    - projects:
+    - other:
+
+    TOPICS
+    - <short snake_case topics, e.g. school_performance, physical_ai, airport_operations>
+
+    EXACT_TRANSCRIPTION
+    <transcribe the note as accurately as possible>
+
+    STRUCTURED_CAPTURE
+    <organize the content into sections, but do not add new ideas>
+
+    WIKI_SUMMARY
+    <specific distilled summary suitable for later integration into the wiki.
+    Include the main insight, recurring pattern, and concrete actions if present.
+    Avoid generic phrases.>
+
+    ACTIONS
+    - <explicit actions only>
+    - if none, write: none
+
+    UNCERTAIN_TEXT
+    - <only actually uncertain words or phrases>
+    - if none, write: none
+    """
+
+    return call_openai(
+        [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": text},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/png;base64,{encoded}"},
+                    },
+                ],
+            }
+        ]
+    )
+
+
 def summarize_for_wiki(text):
     agent_instructions = load_agent_instructions()
 

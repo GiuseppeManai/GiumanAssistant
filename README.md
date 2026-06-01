@@ -55,6 +55,10 @@ raw/          raw ingested sources
 db/           local ChromaDB index
 AGENTS.md     assistant behavior instructions
 .env          local secrets, not committed
+
+These folders are intentionally empty.
+They contain local knowledge and runtime data and are not committed.
+You need to populated them with .md files containing your knowledge.
 ```
 
 ## Install
