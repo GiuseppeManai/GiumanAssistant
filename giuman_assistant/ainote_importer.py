@@ -57,16 +57,27 @@ def already_processed(path, manifest):
     return file_hash(path) in manifest_hashes(manifest)
 
 
-def mark_processed(path, raw_path, category="unknown", duplicate_status="new"):
+def mark_processed(
+    path,
+    raw_path,
+    category="unknown",
+    duplicate_status="new",
+    imported_at=None,
+    detected_title=None,
+    wiki_page_filename=None,
+):
     manifest = load_manifest()
     fingerprint = file_fingerprint(path)
+    imported_at = imported_at or datetime.now().isoformat(timespec="seconds")
 
     fingerprint.update(
         {
-            "imported_at": datetime.now().isoformat(timespec="seconds"),
+            "imported_at": imported_at,
             "raw_txt_path": raw_path,
             "suggested_category": category,
             "duplicate_status": duplicate_status,
+            "detected_title": detected_title,
+            "wiki_page_filename": wiki_page_filename,
         }
     )
 
@@ -161,21 +172,25 @@ def describe_file(path):
     raise ValueError(f"Unsupported file type: {suffix}")
 
 
-def reindex_updated_files(updated_files):
+def reindex_imported_note(page_path, metadata, knowledge_type):
     from giuman_assistant.memory import index_note
 
-    for filename in updated_files:
-        clean_name = filename.replace("wiki/", "").replace("wiki\\", "")
-        path = Path("wiki") / clean_name
+    path = Path(page_path)
+    if not path.exists():
+        return
 
-        if path.exists():
-            index_note(path.read_text(encoding="utf-8"), clean_name)
+    source = metadata.get("source_path", str(path).replace("\\", "/"))
+    index_note(
+        path.read_text(encoding="utf-8"),
+        source,
+        knowledge_type=knowledge_type,
+        metadata=metadata,
+    )
 
 
 def import_file(path, category, knowledge_type):
-    from giuman_assistant.llm import summarize_for_wiki
     from giuman_assistant.source_store import save_raw_source
-    from giuman_assistant.wiki_manager import integrate_into_wiki
+    from giuman_assistant.wiki_manager import write_ainote_page
 
     extracted = describe_file(path)
 
@@ -183,27 +198,40 @@ def import_file(path, category, knowledge_type):
         raise ValueError("No content extracted")
 
     raw_path = save_raw_source(path.stem, extracted, "ainote_pdf")
-    summary = summarize_for_wiki(extracted)
-
-    header = f"""
----
-category: {category}
-source_device: iflytek_ainote
-source_file: {path.name}
-source_type: handwritten_pdf
----
-
-{summary}
-"""
-
-    updated_files = integrate_into_wiki(header, path.stem, knowledge_type)
-    reindex_updated_files(updated_files)
-    mark_processed(path, raw_path, category=category)
+    imported_at = datetime.now().isoformat(timespec="seconds")
+    page = write_ainote_page(
+        extracted_text=extracted,
+        source_file=path.name,
+        category=category,
+        imported_at=imported_at,
+        raw_txt_path=raw_path,
+        selected_knowledge_type=knowledge_type,
+    )
+    metadata = {
+        "source_path": page["page_path"],
+        "source_filename": page["wiki_filename"],
+        "wiki_page_filename": page["wiki_filename"],
+        "original_filename": path.name,
+        "detected_title": page["detected_title"],
+        "category": page["category"],
+        "imported_at": imported_at,
+    }
+    reindex_imported_note(page["page_path"], metadata, page["knowledge_type"])
+    mark_processed(
+        path,
+        raw_path,
+        category=page["category"],
+        imported_at=imported_at,
+        detected_title=page["detected_title"],
+        wiki_page_filename=page["wiki_filename"],
+    )
 
     return {
         "file": path.name,
         "raw_txt_path": raw_path,
-        "updated_files": updated_files,
+        "updated_files": page["updated_files"],
+        "wiki_page": page["page_path"],
+        "detected_title": page["detected_title"],
     }
 
 
@@ -259,3 +287,57 @@ def import_new_notes(category="professional", knowledge_type="Source only"):
         f"failed {len(result['failed'])} file(s)."
     )
     return result
+
+
+def migrate_legacy_imports():
+    from giuman_assistant.wiki_manager import write_ainote_page
+
+    manifest = load_manifest()
+    migrated = []
+
+    for item in manifest:
+        raw_txt_path = item.get("raw_txt_path")
+        source_file = item.get("source_file")
+        imported_at = item.get("imported_at")
+        category = item.get("suggested_category", "professional")
+        wiki_page_filename = item.get("wiki_page_filename")
+
+        if not raw_txt_path or not source_file or not imported_at:
+            continue
+
+        raw_path = Path(raw_txt_path)
+        if not raw_path.exists():
+            continue
+
+        if wiki_page_filename:
+            wiki_path = Path("wiki") / wiki_page_filename
+            if wiki_path.exists():
+                continue
+
+        extracted = raw_path.read_text(encoding="utf-8")
+        page = write_ainote_page(
+            extracted_text=extracted,
+            source_file=source_file,
+            category=category,
+            imported_at=imported_at,
+            raw_txt_path=raw_txt_path,
+            selected_knowledge_type="Source only",
+        )
+        metadata = {
+            "source_path": page["page_path"],
+            "source_filename": page["wiki_filename"],
+            "wiki_page_filename": page["wiki_filename"],
+            "original_filename": source_file,
+            "detected_title": page["detected_title"],
+            "category": page["category"],
+            "imported_at": imported_at,
+        }
+        reindex_imported_note(page["page_path"], metadata, page["knowledge_type"])
+        item["wiki_page_filename"] = page["wiki_filename"]
+        item["detected_title"] = page["detected_title"]
+        migrated.append(page["page_path"])
+
+    if migrated:
+        save_manifest(manifest)
+
+    return migrated

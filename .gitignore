@@ -1,25 +1,14 @@
-# Python
 .venv/
 __pycache__/
 *.pyc
-
-# Secrets
 .env
-
-# IDEA
 .idea/
-
-# OS
 .DS_Store
 Thumbs.db
-
-# Runtime data
 db/
 raw/
 wiki/
-
-# Temporary
-z_deleteme/
-
-# OneDrive inbox
+notes/
 AINOTE2_inbox/
+Giuman_Assistant_Inbox_AINOTE2/
+z_deleteme/

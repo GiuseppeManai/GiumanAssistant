@@ -18,7 +18,6 @@ def choose_category():
         print(f"{i}. {category}")
 
     choice = input("Choose category [default professional]: ").strip()
-
     if not choice:
         return "professional"
 
@@ -44,7 +43,6 @@ def choose_knowledge_type():
         print(f"{i}. {item}")
 
     choice = input("Choose type [default Source only]: ").strip()
-
     if not choice:
         return "Source only"
 
@@ -64,7 +62,6 @@ def main():
         print(f"{i}. {item['name']}")
 
     selected = input("\nImport all files? [y/N]: ").strip().lower()
-
     if selected != "y":
         print("Cancelled.")
         return

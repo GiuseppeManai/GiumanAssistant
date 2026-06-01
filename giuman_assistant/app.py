@@ -3,11 +3,15 @@ import os
 from datetime import datetime
 
 import requests
+import streamlit as st
 from bs4 import BeautifulSoup
 from pypdf import PdfReader
 
-import streamlit as st
-from giuman_assistant.ainote_importer import import_new_notes, validate_inbox
+from giuman_assistant.ainote_importer import (
+    import_new_notes,
+    migrate_legacy_imports,
+    validate_inbox,
+)
 from giuman_assistant.cleaner import clean_markdown
 from giuman_assistant.lint import (
     add_ignore_rule,
@@ -26,18 +30,21 @@ from giuman_assistant.wiki_manager import (
 
 
 def main():
-
     def get_diff(old_text, new_text):
         old_lines = old_text.splitlines()
         new_lines = new_text.splitlines()
 
         diff = difflib.unified_diff(
-            old_lines, new_lines, fromfile="current", tofile="proposed", lineterm=""
+            old_lines,
+            new_lines,
+            fromfile="current",
+            tofile="proposed",
+            lineterm="",
         )
 
         return "\n".join(diff)
 
-    NOTES_DIR = "notes"
+    notes_dir = "notes"
 
     st.set_page_config(page_title="My Assistant", layout="wide")
     st.markdown(
@@ -130,20 +137,20 @@ def main():
     )
 
     def ensure_notes_dir():
-        os.makedirs(NOTES_DIR, exist_ok=True)
+        os.makedirs(notes_dir, exist_ok=True)
 
     def list_note_files():
         ensure_notes_dir()
-        return [f for f in os.listdir(NOTES_DIR) if f.endswith(".md") or f.endswith(".txt")]
+        return [f for f in os.listdir(notes_dir) if f.endswith(".md") or f.endswith(".txt")]
 
     def append_to_note(filename, content, source_label):
         ensure_notes_dir()
-        path = os.path.join(NOTES_DIR, filename)
+        path = os.path.join(notes_dir, filename)
 
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         with open(path, "a", encoding="utf-8") as f:
-            f.write(f"\n\n## Added {timestamp} — {source_label}\n\n")
+            f.write(f"\n\n## Added {timestamp} - {source_label}\n\n")
             f.write(clean_markdown(content))
             f.write("\n")
 
@@ -179,7 +186,6 @@ def main():
         response.raise_for_status()
 
         content_type = response.headers.get("Content-Type", "").lower()
-
         if "text/html" not in content_type:
             raise ValueError(f"Unsupported content type: {content_type}")
 
@@ -191,14 +197,12 @@ def main():
                 continue
 
             total += len(chunk.encode("utf-8"))
-
             if total > max_size:
                 raise ValueError("Response too large")
 
             chunks.append(chunk)
 
         html = "".join(chunks)
-
         soup = BeautifulSoup(html, "html.parser")
 
         for tag in soup(["script", "style", "nav", "footer", "header"]):
@@ -214,22 +218,25 @@ def main():
         question = st.text_input("Ask something")
 
         if question:
-            docs, sources = query_notes(question)
+            migrate_legacy_imports()
+            docs, sources = query_notes(question, max_distance=1.2)
+            if not docs:
+                docs, sources = query_notes(question)
 
-            # HARD FILTER for ideas
             if "idea" in question.lower():
                 filtered_docs = []
                 filtered_sources = []
 
-                for i in range(len(docs)):
+                for i, doc in enumerate(docs):
                     if sources and i < len(sources) and sources[i]:
-                        src = sources[i].get("source", "")
-                        if "ideas.md" in src:
-                            filtered_docs.append(docs[i])
+                        source = sources[i].get("source", "")
+                        if "ideas.md" in source:
+                            filtered_docs.append(doc)
                             filtered_sources.append(sources[i])
 
                 docs = filtered_docs
                 sources = filtered_sources
+
             from giuman_assistant.voice import apply_voice
 
             raw_answer = ask_llm(question, docs, sources)
@@ -238,15 +245,30 @@ def main():
             st.subheader("Answer")
             st.write(answer)
 
-            st.subheader("Sources")
-            for s in sources:
-                if not s:
+            st.subheader("Retrieved context")
+            for source in sources:
+                if not source:
                     continue
 
-                source = s.get("source", "unknown")
-                chunk = s.get("chunk", "unknown")
+                source_name = source.get("source_path") or source.get("source") or "unknown"
+                original_filename = source.get("original_filename")
+                detected_title = source.get("detected_title")
+                wiki_page = source.get("wiki_page_filename")
+                chunk = source.get("chunk", "unknown")
+                distance = source.get("distance")
 
-                st.write(f"- {source} / chunk {chunk}")
+                parts = [source_name]
+                if wiki_page and wiki_page not in source_name:
+                    parts.append(f"page: {wiki_page}")
+                if original_filename:
+                    parts.append(f"original: {original_filename}")
+                if detected_title:
+                    parts.append(f"title: {detected_title}")
+                parts.append(f"chunk {chunk}")
+                if distance is not None:
+                    parts.append(f"distance {distance:.3f}")
+
+                st.write(" - ".join(parts))
 
     if page == "Add Knowledge":
         st.subheader("Integrate source into wiki")
@@ -267,7 +289,6 @@ def main():
             index=0,
         )
         source_name = st.text_input("Source name (e.g. article title)", key="integrate_source_name")
-
         source_text = st.text_area("Paste raw content here", height=200, key="integrate_text_area")
 
         if st.button("Integrate into Wiki"):
@@ -278,6 +299,7 @@ def main():
                 st.success(f"Updated: {updated_files}")
             else:
                 st.warning("Provide both source name and content.")
+
         st.divider()
         st.subheader("Integrate webpage / URL into wiki")
 
@@ -288,8 +310,6 @@ def main():
                 try:
                     validate_url(url)
                     page_title, page_text = extract_url_text(url)
-
-                    # optional limit
                     page_text = page_text[:15000]
 
                     raw_path = save_raw_source(page_title, page_text, "url")
@@ -299,7 +319,6 @@ def main():
 
                     updated_files = integrate_into_wiki(clean_summary, page_title, "Source only")
                     st.caption(f"Raw source saved: {raw_path}")
-
                     st.success(f"Integrated URL into wiki. Updated: {updated_files}")
                 except Exception as e:
                     st.error(f"Could not integrate URL: {e}")
@@ -379,7 +398,6 @@ def main():
                         return True
                 return False
 
-            # Load ignore rules (simple)
             ignore_rules = []
             ignore_path = "wiki/lint_ignore.md"
 
@@ -391,21 +409,18 @@ def main():
                         if line.strip().startswith("-")
                     ]
 
-            # Filter proposals
             filtered_proposals = []
-            for p in proposals:
-                if not is_ignored(p["raw"], ignore_rules):
-                    filtered_proposals.append(p)
+            for proposal in proposals:
+                if not is_ignored(proposal["raw"], ignore_rules):
+                    filtered_proposals.append(proposal)
 
             proposals = filtered_proposals
-
             st.subheader("Parsed Proposals")
 
-            for i, p in enumerate(proposals):
+            for i, proposal in enumerate(proposals):
                 st.markdown(f"### Proposal {i + 1}")
 
-                # Extract a short description
-                lines = p["raw"].splitlines()
+                lines = proposal["raw"].splitlines()
                 desc = ""
 
                 for line in lines:
@@ -415,8 +430,7 @@ def main():
 
                 st.markdown(f"**{desc}**")
 
-                # --- Preview Diff ---
-                updates = parse_llm_output(p["raw"])
+                updates = parse_llm_output(proposal["raw"])
 
                 for filename, new_content in updates.items():
                     clean_name = filename.replace("wiki/", "").replace("wiki\\", "")
@@ -429,17 +443,13 @@ def main():
                         old_content = ""
 
                     diff = get_diff(old_content, new_content)
-
                     st.markdown(f"**Diff for {clean_name}**")
                     st.code(diff, language="diff")
 
-                # --- Apply ---
                 if st.button(f"Apply Proposal {i + 1}", key=f"apply_{i}"):
                     write_wiki(updates)
                     st.success(f"Applied Proposal {i + 1}")
 
                 if st.button(f"Ignore Proposal {i + 1}", key=f"ignore_{i}"):
-                    # simple rule: use description or first line
-                    add_ignore_rule(p["raw"])
-
+                    add_ignore_rule(proposal["raw"])
                     st.warning(f"Ignored Proposal {i + 1}")
