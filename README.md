@@ -317,11 +317,19 @@ notes/
 Recommended screenshots for the MVP:
 
 ```text
-docs/screenshots/01-home.png
-docs/screenshots/02-add-knowledge.png
-docs/screenshots/03-ainote-import-cli.png
-docs/screenshots/04-ask-assistant-sources.png
-docs/screenshots/05-improve-wiki.png
+## Screenshots
+
+### Ask Assistant
+
+![Ask Assistant](docs/screenshots/01-ask-assistant.png)
+
+### Add Knowledge
+
+![Add Knowledge](docs/screenshots/02-add-knowledge.png)
+
+### Improve Wiki
+
+![Improve Wiki](docs/screenshots/03-improve-wiki.png)
 ```
 
 Once added, include them here:
