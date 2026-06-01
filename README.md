@@ -314,11 +314,6 @@ notes/
 
 ## Screenshots
 
-Recommended screenshots for the MVP:
-
-```text
-## Screenshots
-
 ### Ask Assistant
 
 ![Ask Assistant](docs/screenshots/01-ask-assistant.png)
