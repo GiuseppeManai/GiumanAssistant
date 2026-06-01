@@ -1,9 +1,25 @@
-.venv
-__pycache__
+# Python
+.venv/
+__pycache__/
 *.pyc
+
+# Secrets
 .env
-db
-raw
-.idea
-z_deleteme
+
+# IDE
+.idea/
+
+# OS
 .DS_Store
+Thumbs.db
+
+# Runtime data
+db/
+raw/
+wiki/
+
+# Temporary
+z_deleteme/
+
+# OneDrive inbox
+Giuman_Assistant_Inbox_AINOTE2/
